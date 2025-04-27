@@ -9,13 +9,13 @@ class node:
         self.moves_so_far = moves_so_far;
 
     def __lt__(self, other):
-        return self.priority < other.priority;
+        return self.priority <= other.priority;
 
     def __eq__(self, other):
         return self.board == other.board and self.priority == other.priority and self.prev_node == other.prev_node;
 
     def __str__(self):
-        return f"board: {self.board} \n moves_needed: {self.moves_so_far}";
+        return f"board: {self.board} \nMinimum number of moves = {self.moves_so_far}";
 
 def even(number):
     if number & 1:
@@ -43,10 +43,13 @@ def Manhattan_distance(board):
             if board[i][j] != 0:
                 row = (board[i][j] - 1)//3
                 col = (board[i][j] - 1)%3
+            else:
+                continue;
+            
+            manhattan_distance += abs(row - i)
+            manhattan_distance += abs(col - j)
 
-                manhattan_distance += abs(row - i)
-                manhattan_distance += abs(col - j)
-
+    # print("manhattan distance : ",manhattan_distance);
     return manhattan_distance;
 
 def Euclidean_distance(board):
@@ -63,14 +66,60 @@ def Euclidean_distance(board):
 
     return euclidean_distance;
 
+def Linear_conflict_helper(board, dest_row, dest_col, curr_row, curr_col):
+    n = len(board[0]);
+    conflicts = 0;
+
+    if dest_row[curr_row][curr_col] == curr_row:
+        for i in range(curr_col +1, n):
+            if dest_row[curr_row][i] == curr_row:
+                if dest_col[curr_row][curr_col] > dest_col[curr_row][i]:
+                    conflicts += 1;
+
+    if dest_col[curr_row][curr_col] == curr_col:
+        for i in range(curr_row +1, n):
+            if dest_col[i][curr_col] == curr_col:
+                if dest_row[curr_row][curr_col] > dest_row[i][curr_col]:
+                    conflicts += 1;
+
+    return conflicts;
+
+
+def Linear_conflict(board):
+    n = len(board[0]);
+
+    # print("board ", board);
+
+    dest_row = [[y for y in x] for x in board]
+    dest_col = [[y for y in x] for x in board]
+
+    # print("dest_row ", dest_row);
+
+    for i in range(n):
+        for j in range(n):
+            if board[i][j] == 0:
+                dest_row[i][j] = n - 1;
+                dest_col[i][j] = n - 1;
+            else:
+                dest_row[i][j] = (board[i][j] -1)//n;
+                dest_col[i][j] = (board[i][j] -1)%n;
+
+    conflicts = 0;
+    for i in range(n):
+        for j in range(n):
+            conflicts += Linear_conflict_helper(board, dest_row, dest_col, i, j);
+    
+    # print("conflicts ", conflicts);
+            
+    return Manhattan_distance(board) + 2*conflicts;
 
 def priority_func(board, g_n):
-    return g_n + Hamming_distance(board);
+    return g_n + Linear_conflict(board);
 
 
 def inversion(sequence, left, right):
-    print("left ", left, " right ", right);
-    print(sequence)
+    # print("left ", left, " right ", right);
+    # print(sequence)
     if left == right:
         return 0;
 
@@ -91,7 +140,12 @@ def inversion(sequence, left, right):
             sequence.append(left_sequence[i]);
             i += 1;
         else:
-            inversion_no += mid-left+1 - i +1;
+            # code to find out the inversions in the board
+            # t = i;
+            # while t < mid-left+1:
+            #     print(left_sequence[t], " ", right_sequence[j]);
+            #     t += 1;
+            inversion_no += (mid - left) - i +1;
             sequence.append(right_sequence[j]);
             j += 1;
 
@@ -100,7 +154,7 @@ def inversion(sequence, left, right):
         i += 1;
 
     while j < right-mid:
-        sequence.append(left_sequence[j]);
+        sequence.append(right_sequence[j]);
         j += 1;
 
     return inversion_no;
@@ -112,11 +166,15 @@ def solvable(n, board):
     blank_row = 0;
     for i in range(n):
         for j in range(n):
-            board_sequence.append(board[i][j]);
             if board[i][j] == 0:
-                blank_row = n - i;  
+                blank_row = n - i;
+                continue;
+             
+            board_sequence.append(board[i][j]);
+             
 
     inversion_no = inversion(board_sequence, 0, len(board_sequence)-1);
+    print("inversion_no ", inversion_no);
     if even(n):
         if (even(blank_row) and not even(inversion_no)) or (not even(blank_row) and even(inversion_no)):
             return True;
@@ -139,11 +197,17 @@ def goal_board(board):
 
 
 def solve(open_list):
+    explored = 1;
+    expanded = 0;
+
     while len(open_list) != 0:
         least_priority_node = heapq.heappop(open_list);
+        expanded += 1;
+        # print("current board ", least_priority_node.board);
+        # print("current priority ", least_priority_node.priority);
 
         if goal_board(least_priority_node.board):
-            return least_priority_node;
+            return least_priority_node, explored, expanded;
 
         closed_list.append(least_priority_node)
 
@@ -164,7 +228,8 @@ def solve(open_list):
             
             new_node = node(up_move_board, priority_func(up_move_board, least_priority_node.moves_so_far + 1), least_priority_node, least_priority_node.moves_so_far + 1);
             if new_node not in open_list:
-                open_list.append(new_node);
+                heapq.heappush(open_list, new_node);
+                explored += 1;
 
         if blank_row + 1 < n:
             down_move_board = [row[:] for row in least_priority_node.board];
@@ -173,7 +238,8 @@ def solve(open_list):
             
             new_node = node(down_move_board, priority_func(down_move_board, least_priority_node.moves_so_far + 1), least_priority_node, least_priority_node.moves_so_far + 1);
             if new_node not in open_list:
-                open_list.append(new_node);
+                heapq.heappush(open_list, new_node);
+                explored += 1;
         
         if 0 <= blank_col - 1:
             left_move_board = [row[:] for row in least_priority_node.board];
@@ -182,7 +248,8 @@ def solve(open_list):
             
             new_node = node(left_move_board, priority_func(left_move_board, least_priority_node.moves_so_far + 1), least_priority_node, least_priority_node.moves_so_far + 1);
             if new_node not in open_list:
-                open_list.append(new_node);
+                heapq.heappush(open_list, new_node);
+                explored += 1;
 
         if blank_col + 1 < n:
             right_move_board = [row[:] for row in least_priority_node.board];
@@ -191,8 +258,30 @@ def solve(open_list):
             
             new_node = node(right_move_board, priority_func(right_move_board, least_priority_node.moves_so_far + 1), least_priority_node, least_priority_node.moves_so_far + 1);
             if new_node not in open_list:
-                open_list.append(new_node);
+                heapq.heappush(open_list, new_node);
+                explored += 1;
 
+
+def print_step(final_node):
+
+    if final_node.prev_node is None:
+        for row in final_node.board:
+            for col in row:
+                print(col, end=" ");
+            print("");
+        print("")
+
+        return ;
+
+    print_step(final_node.prev_node);
+    for row in final_node.board:
+            for col in row:
+                print(col, end=" ");
+            print("");
+    print("");
+
+    return;
+        
 
 
 n = int(input())
@@ -204,10 +293,17 @@ for _ in range(n):
 
 closed_list = []
 open_list = []
+explored = 0;
+expanded = 0;
 if solvable(n, board):
     initial_node = node(board, priority_func(board, 0), None, 0);
     open_list.append(initial_node);
-    print(solve(open_list));
+    explored += 1;
+
+    final_node, explored, expanded = solve(open_list);
+
+    print(final_node, "\nexplored node : ", explored, "\nexpanded node : ", expanded, "\n");
+    print_step(final_node);
 else:
     print("Board not solvable");
 
