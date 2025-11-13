@@ -27,7 +27,7 @@ def Randomized_heuristic(graph, n):
         x = []
         y = []
 
-        for j in range(1,len(graph)):
+        for j in range(1, total_vertices + 1):
             if random.random() >= 0.5:
                 x.append(j)
             else:
@@ -261,7 +261,7 @@ def local_search(graph, x, y):
             break
 
     if repeat_check == 0 and local_search_iterations != 0 :
-        local_search_avg_cut_weight = local_search_avg_cut_weight / local_search_iterations
+        local_search_avg_cut_weight = round(local_search_avg_cut_weight / local_search_iterations, 2)
 
     return x, y, cut_weight
 
@@ -347,21 +347,23 @@ def run_GRASP(file_name):
     temp_result["randomized_cut_weight"] = random_cut_weight
 
     greedy_x, greedy_y, greedy_cut_weight = Greedy_heuristic(graph)
-    print(f"Greedy heuristic cut weight {file_no}: ", greedy_cut_weight)
+    # print(f"Greedy heuristic cut weight {file_no}: ", greedy_cut_weight)
     temp_result["greedy_cut_weight"] = greedy_cut_weight
     # print("x :", greedy_x)
     # print("y :", greedy_y)
 
     grasp_x, grasp_y, grasp_cut_weight = GRASP(graph, grasp_search_iterations)
     print(f"GRASP cut weight {file_no}: ", grasp_cut_weight)
-    print(f"Semi-greedy cut weight {file_no}: ", semi_greedy_cut_weight )
-    print(f"local search iterations {file_no}: ", local_search_iterations)
-    print(f"local search avg cut weight {file_no}: ", local_search_avg_cut_weight)
-    temp_result["grasp_cut_weight"] = grasp_cut_weight
+    # print(f"Semi-greedy cut weight {file_no}: ", semi_greedy_cut_weight )
+    # print(f"local search iterations {file_no}: ", local_search_iterations)
+    # print(f"local search avg cut weight {file_no}: ", local_search_avg_cut_weight)
+    temp_result["semi_greedy_cut_weight"] = semi_greedy_cut_weight
     temp_result["local_search_iterations"] = local_search_iterations
     temp_result["local_search_avg_cut_weight"] = local_search_avg_cut_weight
-    temp_result["semi_greedy_cut_weight"] = semi_greedy_cut_weight
+    temp_result["grasp_iterations"] = grasp_search_iterations
+    temp_result["grasp_cut_weight"] = grasp_cut_weight
 
+    print(f"{file_name} processing ended")
     repeat_check = 0
     semi_greedy_cut_weight = 0
     local_search_avg_cut_weight = 0
@@ -374,21 +376,53 @@ start_time = time.time()
 input_files = []
 for i in range(1,55):
     input_files.append("./graph_GRASP/set1/g"+str(i)+".rud")
+# input_files.append("./graph_GRASP/set1/g"+str(41)+".rud")
+# input_files.append("./graph_GRASP/set1/g"+str(42)+".rud")
 
-# with multiprocessing.Pool(processes = 9) as pool:
-#     result = pool.map(run_GRASP, input_files)
+with multiprocessing.Pool(processes = 9) as pool:
+    result = pool.map(run_GRASP, input_files)
 
-for _ in map(run_GRASP, input_files):
-    pass
+# for _ in map(run_GRASP, input_files):
+#     pass
 
 fieldnames = result[0].keys()
 with open("results.csv", "w", newline="") as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-    writer.writeheader()  # writes column names
+    writer.writeheader()
     writer.writerows(result)
 
 end_time = time.time()
 print("time needed :", end_time - start_time)
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("results.csv")
+
+df = df.drop(columns=["local_search_iterations"])
+
+df = df.rename(columns={
+    "file_no": "File No",
+    "randomized_cut_weight": "Randomized",
+    "greedy_cut_weight": "Greedy",
+    "grasp_cut_weight": "GRASP",
+    "local_search_avg_cut_weight": "Local Search (avg)",
+    "semi_greedy_cut_weight": "Semi-Greedy"
+})
+
+df_melted = pd.melt(df, id_vars=["File No"], 
+                    value_vars=["Randomized", "Greedy", "GRASP", "Local Search (avg)", "Semi-Greedy"],
+                    var_name="Algorithm", value_name="Cut Weight")
+
+plt.figure(figsize=(12, 6))
+sns.barplot(x="File No", y="Cut Weight", hue="Algorithm", data=df_melted)
+
+plt.title("Comparison of Cut Weights per File")
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.savefig("cut_weight_plot.pdf")  
+
 
 # print(graph)

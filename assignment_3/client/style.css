@@ -1,0 +1,246 @@
+:root{
+    --board-width: 600px;
+    --board-height: 500px;
+    --board-col: 6;
+    --board-row: 9;
+    --cell-width: calc(var(--board-width)/var(--board-col));
+    --cell-height: calc(var(--board-height)/var(--board-row));
+}
+
+body{
+    padding:0;
+    margin: 0;
+    width:100vw;
+    min-height:100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.result{
+    position:absolute;
+    z-index:10;
+    width:100vw;
+    min-height:100vh;
+    background-color: rgba(219, 214, 214, 0.574) ;
+    backdrop-filter: blur(5px);
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+}
+
+.result.n_visible{
+    display: none;
+}
+
+.result .curtain{
+    width:18rem;
+    height:9rem;
+    border-radius: 1rem;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 0, 0, 0.661);
+    color: white;
+}
+
+.curtain.B{
+    background-color: aquamarine;
+}
+
+.result .replay{
+    padding:0.5rem;
+}
+
+.result .replay:hover{
+    color:black;
+}
+
+.controls{
+    flex:1;
+    height:auto;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.turns{
+    position: relative;
+}
+
+.turn{
+    font-size:2rem;
+    padding:0.5rem;
+    margin:1rem;
+    height:4rem;
+    width:9rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.turn.select{
+    position: absolute;
+    z-index:-10;
+    background-color: rgba(255, 217, 0, 0.478);
+    transition: transform;
+    transition-duration: 0.3s;
+    transition-timing-function: linear;
+    top:0;
+}
+
+.turn.select.bottom{
+    transform: translateY(100%);
+}
+
+.score{
+    height:2rem;
+    width:2rem;
+    margin:0.5rem;
+    font-size: 2rem;
+}
+
+.board{
+    width: var(--board-width);
+    height: var(--board-height);
+    margin:0.5rem;
+    position:relative;
+}
+
+.board.R{
+    background-color: rgba(255, 0, 0, 0.695);
+}
+
+.board.B{
+    background-color: aquamarine;
+}
+
+.hl{
+    width:100%;
+    height:100%;
+    position:absolute;
+    display:flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index:10;
+}
+
+.hr{
+    height: 2px;
+    width:100%;
+    background-color: black;
+
+}
+
+.vl{
+    width:100%;
+    height:100%;
+    display:flex;
+    justify-content: space-between; 
+}
+
+.vr{
+    width:2px;
+    height:100%;
+    background-color: black;
+}
+
+.board-red{
+    background-color: rgba(210, 41, 41, 0.721);
+}
+
+.atom-container{
+    width:calc(var(--board-width)/var(--board-col));
+    height:calc(var(--board-height)/var(--board-row));
+    position:absolute;
+    top:0px;
+    left:0px;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.atom{
+    width:15px;
+    height:15px;
+    border-radius: 50%;
+    border-color: black;
+    border:3px solid;
+}
+
+.atom-container .R .atom{
+    background-color: rgba(255, 0, 0, 0.748);
+}
+
+.atom-container .B .atom{
+    background-color: rgba(0, 110, 255, 0.906);
+}
+
+.mono-atom{
+    width:50px;
+    height:50px;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.di-atom{
+    width:50px;
+    height:50px;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tri-atom{
+    width:41px;
+    height:41px;
+    position:relative;
+}
+
+.tri-atom .atom1{
+    position:absolute;
+    bottom:0px;
+    left:0px;
+}
+
+.tri-atom .atom2{
+    position:absolute;
+    bottom:0px;
+    right:0px;
+}
+
+.tri-atom .atom3{
+    position:absolute;
+    left:10px;
+    top:2px;
+}
+
+/* .r2c1{
+    top: calc(5*var(--cell-height));
+    left: calc(2*var(--cell-width));
+} */
+
+.rotating-slow {
+    animation: spin 4s linear infinite;
+}
+
+.rotating-fast{
+    animation: spin 2s linear infinite;
+}
+  
+@keyframes spin {
+from {
+    transform: rotate(0deg);
+}
+to {
+    transform: rotate(360deg);
+}
+}
+
+
